@@ -15,8 +15,6 @@
  */
 package org.springframework.vault.client;
 
-import reactor.core.publisher.Mono;
-
 import org.springframework.core.codec.ByteArrayDecoder;
 import org.springframework.core.codec.ByteArrayEncoder;
 import org.springframework.core.codec.StringDecoder;
@@ -29,7 +27,9 @@ import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriBuilderFactory;
+import reactor.core.publisher.Mono;
 
 /**
  * Vault Client factory to create {@link WebClient} configured to the needs of accessing
@@ -90,8 +90,16 @@ public class ReactiveVaultClients {
 
 				}).build();
 
-		return WebClient.builder().uriBuilderFactory(uriBuilderFactory)
+
+		DefaultUriBuilderFactory factory = new DefaultUriBuilderFactory(toBaseUri(endpointProvider.getVaultEndpoint()));
+		factory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.URI_COMPONENT);
+		return WebClient.builder().uriBuilderFactory(factory)
 				.exchangeStrategies(strategies).clientConnector(connector).build();
+	}
+
+	private static String toBaseUri(VaultEndpoint endpoint) {
+		return endpoint.getScheme() + "://" + endpoint.getHost() + ":"
+						+ endpoint.getPort() + "/v1/";
 	}
 
 	/**
